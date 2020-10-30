@@ -17,7 +17,7 @@ app.listen(port, () => console.log(`your app is running with ${port}`));
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017";
 
 app.get("/", (req, res) => {
-  res.send("Sample page from server <br> " + process.env.CONFIG_VALUE);
+  res.send("Sample page from server <br> ");
 });
 
 app.get("/users", async (req, res) => {
