@@ -4,6 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoDB = require("mongodb");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const mongoClient = mongoDB.MongoClient;
 const objId = mongoDB.ObjectID;
 
@@ -15,7 +16,6 @@ dotenv.config();
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`your app is running with ${port}`));
 
-// const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017";
 const dbUrl = process.env.DB_URL || "mongodb://127.0.0.1:27017";
 
 app.get("/", (req, res) => {
@@ -59,12 +59,17 @@ app.post("/login", async (req, res) => {
     let db = client.db("studentDetails");
     let data = await db.collection("users").findOne({ email: req.body.email });
     if (data) {
-      let compare = await bcrypt.compare(req.body.password, data.password);
-      if (compare) {
-        console.log("valid user", compare);
+      let isValid = await bcrypt.compare(req.body.password, data.password);
+      if (isValid) {
+        let token = await jwt.sign({ userId: data._id }, process.env.JWT_KEY, {
+          expiresIn: "1h",
+        });
+        console.log("valid user", isValid);
+        console.log("token", token);
         res.status(200).json({
           status: 200,
           message: "login success",
+          token,
         });
       } else {
         res.status(403).json({
