@@ -87,3 +87,22 @@ app.post("/login", async (req, res) => {
     console.log(error);
   }
 });
+
+app.get("/dashboard", auth, (req, res) => {
+  res.json({
+    message: "valid token and you can access dashboard",
+  });
+});
+
+async function auth(req, res, next) {
+  if (req.headers.authorization != undefined) {
+    let result = await jwt.verify(
+      req.headers.authorization,
+      process.env.JWT_KEY
+    );
+    console.log(result);
+    next();
+  } else {
+    res.send("invalid");
+  }
+}
