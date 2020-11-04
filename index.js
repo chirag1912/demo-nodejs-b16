@@ -5,6 +5,8 @@ const dotenv = require("dotenv");
 const mongoDB = require("mongodb");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+
+const { authorize, allowUser } = require("./custom-middleware/auth");
 const mongoClient = mongoDB.MongoClient;
 const objId = mongoDB.ObjectID;
 
@@ -61,9 +63,13 @@ app.post("/login", async (req, res) => {
     if (data) {
       let isValid = await bcrypt.compare(req.body.password, data.password);
       if (isValid) {
-        let token = await jwt.sign({ userId: data._id }, process.env.JWT_KEY, {
-          expiresIn: "1h",
-        });
+        let token = await jwt.sign(
+          { userId: data._id, role: data.role },
+          process.env.JWT_KEY,
+          {
+            expiresIn: "1h",
+          }
+        );
         console.log("valid user", isValid);
         console.log("token", token);
         res.status(200).json({
@@ -88,21 +94,14 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/dashboard", auth, (req, res) => {
+app.get("/dashboard", [authorize, allowUser("ADMIN")], (req, res) => {
   res.json({
     message: "valid token and you can access dashboard",
   });
 });
 
-async function auth(req, res, next) {
-  if (req.headers.authorization != undefined) {
-    let result = await jwt.verify(
-      req.headers.authorization,
-      process.env.JWT_KEY
-    );
-    console.log(result);
-    next();
-  } else {
-    res.send("invalid");
-  }
-}
+app.get("/student-profile", [authorize, allowUser("STUDENT")], (req, res) => {
+  res.json({
+    message: "valid token and you can access student profile",
+  });
+});
